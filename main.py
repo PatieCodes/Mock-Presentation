@@ -1,42 +1,40 @@
 import streamlit as st
 import pandas as pd
 
-def load_file(data_url: str):
-    """
-    Loads all sheets from an Excel file stored on Google Drive
-    and returns a dictionary of DataFrames.
-    """
+# ------------------------------
+# Your original function (unchanged)
+# ------------------------------
+def load_file(data_url): 
+    # Modify the URL to make it accessible for pandas
+    modified_url = data_url.replace('/edit?usp=sharing', '/export?format=xlsx')
 
-    # Convert Google Drive "edit" link → direct download link
-    modified_url = data_url.replace("/edit?usp=sharing", "/export?format=xlsx")
+    # Load ALL sheets from the Excel file
+    all_sheets = pd.read_excel(modified_url, sheet_name=None)
 
-    try:
-        all_sheets = pd.read_excel(modified_url, sheet_name=None)
-    except Exception as e:
-        st.error(f"Failed to load the file: {e}")
-        return None
+    data = {}
 
-    return all_sheets
+    # Loop through each sheet and store in dictionary
+    for sheet_name, df in all_sheets.items():
+        data[sheet_name] = df
 
+    return data
 
-# --- Streamlit App Section ---
-st.title("Excel Data Loader Dashboard")
+# ------------------------------
+# Streamlit App
+# ------------------------------
+st.title("Excel Loader Dashboard")
 
-data_url = st.text_input(
-    "Enter Google Drive Excel File URL",
-    placeholder="Paste your Google Drive link here..."
-)
+data_url = st.text_input("Enter Google Sheets Excel File URL")
 
 if data_url:
     data = load_file(data_url)
 
-    if data:
-        st.success("File loaded successfully!")
+    st.success("File loaded successfully!")
+    st.write("Available sheets:", list(data.keys()))
 
-        # Show list of sheets
-        sheet = st.selectbox("Select sheet to view:", list(data.keys()))
-
-        # Display sheet content
-        st.subheader(f"Preview of: {sheet}")
-        st.dataframe(data[sheet])
-
+    # Display a specific sheet (example: Switchbacks)
+    if "Switchbacks" in data:
+        st.subheader("Switchbacks Sheet Preview")
+        st.dataframe(data["Switchbacks"])
+    else:
+        st.warning("'Switchbacks' sheet not found in the file.")
